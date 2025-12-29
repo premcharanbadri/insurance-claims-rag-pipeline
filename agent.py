@@ -14,12 +14,6 @@ from langchain_core.messages import HumanMessage
 
 # Parsing
 from unstructured.partition.pdf import partition_pdf
-
-# ---------------------------------------------------------
-# CONFIGURATION
-# ---------------------------------------------------------
-# Use "Mini" for high-volume indexing (95% cheaper), 
-# Use "GPT-4o" only for the final complex reasoning.
 INDEXING_MODEL = "gpt-4o-mini" 
 REASONING_MODEL = "gpt-4o"
 MAX_IMAGE_DIMENSION = 800  # Resize images to max 800px to save tokens
@@ -139,7 +133,6 @@ def parallel_ingest_folder(folder_path: str):
     """
     Uses Multi-threading to process files 5x-10x faster.
     """
-    # Use the Cheaper/Faster Model for Indexing
     indexing_model = ChatOpenAI(model=INDEXING_MODEL, max_tokens=500)
     
     all_files = [os.path.join(folder_path, f) for f in os.listdir(folder_path) if f.startswith(".") is False]
@@ -167,7 +160,7 @@ def parallel_ingest_folder(folder_path: str):
     return vectorstore
 
 # ---------------------------------------------------------
-# STEP 2: POWERFUL RETRIEVAL (RANKING & SYNTHESIS)
+# STEP 2: RETRIEVAL (RANKING & SYNTHESIS)
 # ---------------------------------------------------------
 
 def ask_expert_adjuster(query, vectorstore):
@@ -193,7 +186,7 @@ def ask_expert_adjuster(query, vectorstore):
     # 3. Deduplicate images (identical images might appear in multiple chunks)
     evidence_images = list(set(evidence_images))
     
-    # 4. Final Reasoning with the "Smart" Model
+    # 4. Final Reasoning
     reasoning_model = ChatOpenAI(model=REASONING_MODEL, temperature=0)
     
     final_prompt = [
@@ -229,5 +222,5 @@ def ask_expert_adjuster(query, vectorstore):
 # USAGE
 # ---------------------------------------------------------
 # db = parallel_ingest_folder("./claims_data")
-# answer = ask_expert_adjuster("Is the bumper damage consistent with the police report?", db)
+# answer = ask_expert_adjuster("Is the bumper damage consistent with the report?", db)
 # print(answer)
